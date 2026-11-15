@@ -1,14 +1,17 @@
+importScripts('i18n.js');
+const T = self.AIF_T;
+
 // 元数据检查：读取图片开头的字节，查找生成工具写入的标记。
 // 只对通用网页启用；小红书 / Pinterest 的 CDN 会重新压缩图片并抹掉元数据。
 const MAX_BYTES = 512 * 1024;
 const cache = new Map();
 
 const MARKERS = [
-  [/trainedAlgorithmicMedia/i, '元数据：C2PA / IPTC 声明为 AI 生成或合成'],
-  [/tEXtparameters\0[\s\S]{0,6000}?Steps: \d+/, '元数据：Stable Diffusion 生成参数'],
-  [/tEXtSoftware\0NovelAI/, '元数据：NovelAI'],
-  [/tEXtprompt\0\{[\s\S]*?class_type/, '元数据：ComfyUI 工作流'],
-  [/Midjourney|Stable Diffusion|NovelAI|ComfyUI|Adobe Firefly|DALL.{1,2}E[ -]?[23]/, '元数据：提到 AI 生成工具'],
+  [/trainedAlgorithmicMedia/i, T('metaC2pa')],
+  [/tEXtparameters\0[\s\S]{0,6000}?Steps: \d+/, T('metaSd')],
+  [/tEXtSoftware\0NovelAI/, T('metaNovelAi')],
+  [/tEXtprompt\0\{[\s\S]*?class_type/, T('metaComfy')],
+  [/Midjourney|Stable Diffusion|NovelAI|ComfyUI|Adobe Firefly|DALL.{1,2}E[ -]?[23]/, T('metaTool')],
 ];
 
 async function readHead(url) {
@@ -63,7 +66,7 @@ async function ensureOffscreen() {
       .createDocument({
         url: 'offscreen/offscreen.html',
         reasons: ['WORKERS'],
-        justification: '在本地运行 AI 图片检测模型',
+        justification: T('offscreenWhy'),
       })
       .finally(() => (creating = null));
   }
@@ -86,28 +89,28 @@ async function runModel(url, force) {
 // 页面上有些图不是普通的图片元素（背景图、只有链接等），自动扫描看不到，用这个兜底。
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: 'aif-check', title: '用 AI 过滤器检查这张图片', contexts: ['image', 'link'] });
+    chrome.contextMenus.create({ id: 'aif-check', title: T('menuCheck'), contexts: ['image', 'link'] });
   });
 });
 
 function describe(res) {
-  if (!res || res.error) return '检查失败：这不是图片，或者图片读取不到';
-  if (res.blurry) return '图片太模糊，无法判断';
+  if (!res || res.error) return T('checkFailed');
+  if (res.blurry) return T('checkBlurry');
   if (res.tiles) {
     return res.hits
-      ? `这是拼图：${res.tiles} 格里有 ${res.hits} 格被模型判为 AI`
-      : `这是拼图：${res.tiles} 格都没有被模型判为 AI`;
+      ? T('checkCollageHit', res.tiles, res.hits)
+      : T('checkCollageClean', res.tiles);
   }
-  if (typeof res.p !== 'number') return '图片太小，无法判断';
+  if (typeof res.p !== 'number') return T('checkSmall');
   const pct = (Math.floor(res.p * 1000) / 10).toFixed(1);
-  const verdict = res.ai ? '判为 AI' : res.unsure ? '疑似 AI（把握不够）' : '未判为 AI';
-  return `${verdict}。模型分数 ${pct}%（达到 99% 才算，分数仅供参考）`;
+  const verdict = T(res.ai ? 'verdictAi' : res.unsure ? 'verdictUnsure' : 'verdictClean');
+  return T('checkScore', verdict, pct);
 }
 
 async function checkFromMenu(url, tabId) {
   const toast = (text, busy) => chrome.tabs.sendMessage(tabId, { type: 'toast', text, busy }).catch(() => {});
-  if (!/^https?:/.test(url || '')) return toast('这张图片的地址无法读取');
-  toast('正在检查…（首次使用需要先下载模型）', true);
+  if (!/^https?:/.test(url || '')) return toast(T('checkNoUrl'));
+  toast(T('checkBusy'), true);
   let res;
   try {
     res = await runModel(url, true);

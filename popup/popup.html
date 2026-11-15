@@ -1,17 +1,14 @@
 <!doctype html>
-<html lang="zh-CN">
+<html>
   <head>
     <meta charset="utf-8" />
     <style>
-      body { width: 280px; margin: 0; padding: 14px; font: 13px/1.6 system-ui, "Microsoft YaHei", sans-serif; color: #222; }
+      body { width: 290px; margin: 0; padding: 14px; font: 13px/1.6 system-ui, "Microsoft YaHei", sans-serif; color: #222; }
       h1 { margin: 0 0 10px; font-size: 15px; }
       label { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
       fieldset { margin: 10px 0; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; }
       legend { color: #666; font-size: 12px; }
       .stats, .hint { margin: 6px 0; color: #666; font-size: 12px; }
-      .row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
-      .row input[type="range"] { flex: 1; }
-      select { flex: 1; padding: 2px; }
       #modelStatus { font-weight: 600; color: #333; }
       .notice { margin: 10px 0 6px; padding: 8px 10px; border-radius: 6px; background: #fff6e5; border: 1px solid #f0d9a8; color: #6b4e16; font-size: 12px; line-height: 1.55; }
       button { padding: 4px 10px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
@@ -19,27 +16,26 @@
     </style>
   </head>
   <body>
-    <h1>AI 过滤器</h1>
-    <label><input type="checkbox" id="enabled" /> 启用</label>
+    <h1 data-i18n="popTitle"></h1>
+    <label><input type="checkbox" id="enabled" /> <span data-i18n="popEnabled"></span></label>
     <fieldset>
-      <legend>发现 AI 图片时</legend>
-      <label><input type="radio" name="mode" value="badge" /> 只打标记</label>
-      <label><input type="radio" name="mode" value="blur" /> 模糊（悬停查看）</label>
-      <label><input type="radio" name="mode" value="hide" /> 隐藏</label>
+      <legend data-i18n="popWhenFound"></legend>
+      <label><input type="radio" name="mode" value="badge" /> <span data-i18n="popBadge"></span></label>
+      <label><input type="radio" name="mode" value="blur" /> <span data-i18n="popBlur"></span></label>
+      <label><input type="radio" name="mode" value="hide" /> <span data-i18n="popHide"></span></label>
     </fieldset>
-    <label><input type="checkbox" id="weak" /> 显示"疑似AI"弱提示</label>
-    <label><input type="checkbox" id="meta" /> 检查图片元数据（普通网页）</label>
+    <label><input type="checkbox" id="weak" /> <span data-i18n="popWeak"></span></label>
+    <label><input type="checkbox" id="meta" /> <span data-i18n="popMeta"></span></label>
     <fieldset>
-      <legend>本地模型（实验功能）</legend>
-      <label><input type="checkbox" id="model" /> 用模型识别图片本身</label>
+      <legend data-i18n="popModelGroup"></legend>
+      <label><input type="checkbox" id="model" /> <span data-i18n="popModel"></span></label>
       <div class="hint" id="modelStatus"></div>
-      <div class="hint">首次开启会下载约 190MB 模型，之后只在本机运行，图片不会上传。只有把握很高时才会标记，所以会漏掉一部分 AI 图；也仍可能误判。</div>
+      <div class="hint" data-i18n="popModelHint"></div>
     </fieldset>
-    <div class="notice">
-      <b>使用须知</b>：检测结果可能出错，会漏判，也会把真人作品误判成 AI。本工具仅供个人筛选素材时参考，禁止把结果当作证据用于指认、举报他人，或用于"AI 对赌"等任何争议和对赌场景。
-    </div>
+    <div class="notice"><b data-i18n="popNoticeTitle"></b><span data-i18n="popNotice"></span></div>
     <div class="stats" id="stats"></div>
-    <button id="clear">清空已记录的笔记和作者</button>
+    <button id="clear" data-i18n="popClear"></button>
+    <script src="../src/i18n.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

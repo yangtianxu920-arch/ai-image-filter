@@ -1,5 +1,6 @@
 (() => {
   const D = self.AIF_DETECT;
+  const T = self.AIF_T;
   const host = location.hostname;
   const SITE = /(^|\.)(xiaohongshu|rednote)\.com$/.test(host)
     ? 'xhs'
@@ -43,7 +44,7 @@
     if (getComputedStyle(anchor).position === 'static') anchor.classList.add('aif-host');
     const b = document.createElement('span');
     b.className = `aif-badge aif-${v.level}`;
-    b.textContent = v.text || (v.level === 'ai' ? 'AI' : '疑似AI');
+    b.textContent = v.text || T(v.level === 'ai' ? 'badgeAi' : 'badgeWeak');
     b.title = v.reason;
     anchor.appendChild(b);
     badges.set(el, b);
@@ -101,14 +102,14 @@
     let text = '';
     if (S.enabled && S.model) {
       const st = (S.modelStatus || {}).state;
-      if (st === 'error') text = `模型出错：${S.modelStatus.msg}`;
-      else if (stats.pending && st === 'downloading') text = `正在下载模型 ${S.modelStatus.pct}%…`;
-      else if (stats.pending && st !== 'ready') text = '正在加载模型…';
-      else if (stats.pending) text = `正在检查 ${stats.total - stats.pending}/${stats.total} 张…`;
-      else if (!stats.total) text = '当前没有可检查的图片';
+      if (st === 'error') text = T('pillError', S.modelStatus.msg);
+      else if (stats.pending && st === 'downloading') text = T('pillDownloading', S.modelStatus.pct);
+      else if (stats.pending && st !== 'ready') text = T('pillLoading');
+      else if (stats.pending) text = T('pillChecking', stats.total - stats.pending, stats.total);
+      else if (!stats.total) text = T('pillNone');
       else {
-        text = `已检查 ${stats.total} 张：${stats.found ? `发现 ${stats.found} 张疑似 AI` : '未发现 AI'}`;
-        if (stats.failed) text += `，${stats.failed} 张检查失败`;
+        text = stats.found ? T('pillFound', stats.total, stats.found) : T('pillClean', stats.total);
+        if (stats.failed) text += T('pillFailed', stats.failed);
       }
     }
     if (!text) {
@@ -119,7 +120,7 @@
     if (!pill || !pill.isConnected) {
       pill = document.createElement('div');
       pill.className = 'aif-pill';
-      pill.title = 'AI 过滤器：统计的是当前屏幕附近的图片';
+      pill.title = T('pillTitle');
       document.documentElement.appendChild(pill);
     }
     const busy = stats.pending ? '1' : '0';
@@ -138,7 +139,7 @@
         toast.className = 'aif-toast';
         document.documentElement.appendChild(toast);
       }
-      toast.textContent = `AI 过滤器：${msg.text}`;
+      toast.textContent = T('toastPrefix') + msg.text;
       clearTimeout(toastTimer);
       if (!msg.busy) toastTimer = setTimeout(() => toast && toast.remove(), 9000);
     });
@@ -170,7 +171,7 @@
     if (r === 'pending') {
       stats.pending++;
       // 还没判完的图给一个灰色记号，这样"没有角标"就明确表示"检查过、没发现"
-      return v || { level: 'pending', text: '检查中…', reason: '本地模型正在检查这张图' };
+      return v || { level: 'pending', text: T('pending'), reason: T('pendingReason') };
     }
     if (r === 'error') {
       stats.failed++;
@@ -179,15 +180,23 @@
     // 不显示百分比，那个数字并不可靠
     if (!r.ai && !r.part && !r.unsure) return v;
     stats.found++;
-    if (r.unsure) return v || { level: 'weak', text: '疑似AI·模型', reason: '本地模型认为可能是 AI 生成，但把握不够（白底图、带水印的图容易影响判断，仅供参考）' };
-    if (r.part) return v || { level: 'weak', text: '部分疑似AI·模型', reason: '这是一张拼图，本地模型认为其中个别小图像 AI 生成（仅供参考）' };
-    if (!isVideo) return { level: 'ai', text: 'AI·模型', reason: '本地模型判断为 AI 生成（仍可能误判，可点开笔记纠错）' };
-    return v || { level: 'weak', text: '疑似AI·模型', reason: '本地模型认为这个视频封面像 AI 生成（视频封面容易误判，仅供参考）' };
+    if (r.unsure) return v || { level: 'weak', text: T('modelMaybe'), reason: T('reasonModelUnsure') };
+    if (r.part) return v || { level: 'weak', text: T('modelPart'), reason: T('reasonModelPart') };
+    if (!isVideo) return { level: 'ai', text: T('modelAi'), reason: T('reasonModelAi') };
+    return v || { level: 'weak', text: T('modelMaybe'), reason: T('reasonModelVideo') };
   }
 
   // ---------- 小红书 / rednote ----------
   const noteIdOf = (href) => (String(href || '').match(/\/([0-9a-f]{24})(?:[/?#]|$)/) || [])[1];
   const authorIdOf = (href) => (String(href || '').match(/\/user\/profile\/([0-9a-f]+)/) || [])[1];
+
+  // 记录里存的是与语言无关的代号（manual / label:原文），显示时再翻译；也兼容旧版本存的中文
+  function reasonText(code) {
+    if (code === 'manual' || code === '手动标记') return T('reasonManual');
+    if (code.startsWith('label:')) return T('reasonLabel', code.slice(6));
+    if (code.startsWith('平台标识：')) return T('reasonLabel', code.slice(5));
+    return code;
+  }
 
   function remember(noteId, authorId, name, reason) {
     const patch = {};
@@ -216,10 +225,10 @@
 
   function cardVerdict(noteId, authorId) {
     if (noteId && S.okNotes[noteId]) return null;
-    if (noteId && S.aiNotes[noteId]) return { level: 'ai', reason: S.aiNotes[noteId] };
+    if (noteId && S.aiNotes[noteId]) return { level: 'ai', reason: reasonText(S.aiNotes[noteId]) };
     // 标题里写了"AI"不代表图是 AI 生成的（教程、讨论、吐槽都会提到），所以不看文字
     const a = authorId && S.aiAuthors[authorId];
-    if (a && a.notes.length) return { level: 'weak', reason: `该作者有 ${a.notes.length} 篇笔记被标为 AI` };
+    if (a && a.notes.length) return { level: 'weak', reason: T('reasonAuthor', a.notes.length) };
     return null;
   }
 
@@ -263,13 +272,13 @@
     let v = null;
     if (!S.okNotes[noteId]) {
       if (S.aiNotes[noteId]) {
-        v = { level: 'ai', reason: S.aiNotes[noteId] };
+        v = { level: 'ai', reason: reasonText(S.aiNotes[noteId]) };
       } else {
         const label = findPlatformLabel(nc);
         // 只认平台自己打的 AI 声明；标题、正文、标签里的字眼不作为依据
         if (label) {
-          v = { level: 'ai', reason: `平台标识：${label}` };
-          remember(noteId, authorId, authorName, v.reason);
+          v = { level: 'ai', reason: T('reasonLabel', label) };
+          remember(noteId, authorId, authorName, `label:${label}`);
         }
       }
       // 模型的判断只用于显示，不写入记录，也不连带作者
@@ -293,7 +302,7 @@
         else {
           delete S.okNotes[d.note];
           save({ okNotes: S.okNotes });
-          remember(d.note, d.author, d.name, '手动标记');
+          remember(d.note, d.author, d.name, 'manual');
         }
         scan();
       });
@@ -301,7 +310,7 @@
     }
     const flagged = !!(v && v.level === 'ai');
     Object.assign(ctl.dataset, { note: noteId, author: authorId || '', name: authorName, flagged: flagged ? '1' : '0' });
-    const text = flagged ? '不是 AI（纠错）' : '标记为 AI';
+    const text = T(flagged ? 'ctlNotAi' : 'ctlMarkAi');
     if (ctl.textContent !== text) ctl.textContent = text; // 不重复写，避免触发自己的 MutationObserver
   }
 
@@ -314,7 +323,7 @@
       const label = [...card.querySelectorAll('span, div')].some(
         (e) => !e.children.length && e.textContent.length < 30 && D.LABEL.test(e.textContent),
       );
-      const v = label ? { level: 'ai', reason: '平台标识：AI' } : null;
+      const v = label ? { level: 'ai', reason: T('reasonLabel', 'AI') } : null;
       setMark(card, card, withModel(v, img));
     });
   }
@@ -402,7 +411,7 @@
     // 清掉旧版本按标题 / 标签字眼记下的笔记，只保留平台标识和手动标记
     let purged = false;
     for (const id of Object.keys(S.aiNotes)) {
-      if (/^(平台标识|手动标记)/.test(S.aiNotes[id])) continue;
+      if (/^(平台标识|手动标记|manual$|label:)/.test(S.aiNotes[id])) continue;
       delete S.aiNotes[id];
       purged = true;
       for (const aid of Object.keys(S.aiAuthors)) {

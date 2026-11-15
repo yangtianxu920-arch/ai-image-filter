@@ -4,15 +4,18 @@ const DEFAULTS = {
   aiNotes: {}, okNotes: {}, aiAuthors: {},
 };
 const $ = (id) => document.getElementById(id);
+const T = self.AIF_T;
+document.documentElement.lang = self.AIF_LANG === 'zh' ? 'zh-CN' : 'en';
+document.querySelectorAll('[data-i18n]').forEach((e) => (e.textContent = T(e.dataset.i18n)));
 
 function statusText(s) {
   if (!s.model) return '';
   const st = s.modelStatus || {};
-  if (st.state === 'downloading') return `正在下载模型… ${st.pct}%`;
-  if (st.state === 'loading') return '正在加载模型…';
-  if (st.state === 'ready') return '模型已就绪';
-  if (st.state === 'error') return `出错：${st.msg}`;
-  return '正在启动…';
+  if (st.state === 'downloading') return T('stDownloading', st.pct);
+  if (st.state === 'loading') return T('stLoading');
+  if (st.state === 'ready') return T('stReady');
+  if (st.state === 'error') return T('stError', st.msg);
+  return T('stStarting');
 }
 
 function render(s) {
@@ -22,7 +25,7 @@ function render(s) {
   $('model').checked = s.model;
   $('modelStatus').textContent = statusText(s);
   document.querySelectorAll('input[name="mode"]').forEach((r) => (r.checked = r.value === s.mode));
-  $('stats').textContent = `已记录 ${Object.keys(s.aiNotes).length} 篇 AI 笔记，${Object.keys(s.aiAuthors).length} 位作者`;
+  $('stats').textContent = T('popStats', Object.keys(s.aiNotes).length, Object.keys(s.aiAuthors).length);
 }
 
 const refresh = () => chrome.storage.local.get(DEFAULTS, render);

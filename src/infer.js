@@ -24,7 +24,7 @@
     const hit = await cache.match(MODEL.url);
     if (hit) return hit.arrayBuffer();
     const net = await fetch(MODEL.url, { credentials: 'omit' });
-    if (!net.ok) throw new Error(`模型下载失败（HTTP ${net.status}）`);
+    if (!net.ok) throw new Error(`HTTP ${net.status}`);
     const total = Number(net.headers.get('content-length')) || MODEL.mb * 1048576;
     const reader = net.body.getReader();
     const chunks = [];

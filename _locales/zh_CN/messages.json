@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "AI 过滤器"
+  },
+  "extDesc": {
+    "message": "标记 / 模糊 / 隐藏网页上的 AI 生成图片（小红书、Pinterest 及通用网页）"
+  }
+}
