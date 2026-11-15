@@ -1,0 +1,129 @@
+.aif-host {
+  position: relative !important;
+}
+
+.aif-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2147483000;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font: 600 12px/1.5 system-ui, "Microsoft YaHei", sans-serif;
+  color: #fff;
+  background: #e5484d;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+  cursor: help;
+  user-select: none;
+}
+
+.aif-badge.aif-weak {
+  background: #b7791f;
+}
+
+.aif-badge.aif-pending {
+  background: rgba(60, 60, 60, 0.75);
+  font-weight: 500;
+  cursor: default;
+}
+
+.aif-pill {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 2147483001;
+  padding: 6px 12px 6px 26px;
+  border-radius: 16px;
+  font: 500 12px/1.5 system-ui, "Microsoft YaHei", sans-serif;
+  color: #fff;
+  background: rgba(30, 30, 30, 0.88);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.aif-toast {
+  position: fixed;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  max-width: min(520px, 90vw);
+  z-index: 2147483002;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font: 500 14px/1.6 system-ui, "Microsoft YaHei", sans-serif;
+  color: #fff;
+  background: rgba(30, 30, 30, 0.94);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.aif-pill::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: #3fb950;
+}
+
+.aif-pill[data-busy="1"]::before {
+  background: #e3b341;
+  animation: aif-pulse 1s ease-in-out infinite;
+}
+
+@keyframes aif-pulse {
+  50% { opacity: 0.25; }
+}
+
+html[data-aif-weak="0"] .aif-badge.aif-weak {
+  display: none;
+}
+
+img[data-aif="ai"] {
+  outline: 3px solid #e5484d;
+  outline-offset: -3px;
+}
+
+/* 模糊模式：鼠标移上去可以看原图 */
+html[data-aif-mode="blur"] [data-aif="ai"]:not(img) img,
+html[data-aif-mode="blur"] img[data-aif="ai"] {
+  filter: blur(18px);
+  transition: filter 0.15s;
+}
+
+html[data-aif-mode="blur"] [data-aif="ai"]:not(img):hover img,
+html[data-aif-mode="blur"] img[data-aif="ai"]:hover {
+  filter: none;
+}
+
+/* 隐藏模式：保留占位，避免打乱瀑布流和无限滚动 */
+html[data-aif-mode="hide"] section.note-item:has(a.cover[data-aif="ai"]),
+html[data-aif-mode="hide"] [data-grid-item][data-aif="ai"],
+html[data-aif-mode="hide"] img[data-aif="ai"] {
+  visibility: hidden !important;
+}
+
+.aif-ctl {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2147483000;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 12px;
+  font: 500 12px/1.5 system-ui, "Microsoft YaHei", sans-serif;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.aif-ctl:hover {
+  opacity: 1;
+}

@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "AI 过滤器",
+  "version": "0.3.0",
+  "description": "标记 / 模糊 / 隐藏网页上的 AI 生成图片（小红书、Pinterest 及通用网页）",
+  "minimum_chrome_version": "116",
+  "permissions": ["storage", "offscreen", "contextMenus"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "src/background.js" },
+  "action": { "default_popup": "popup/popup.html", "default_title": "AI 过滤器" },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "cross_origin_embedder_policy": { "value": "credentialless" },
+  "cross_origin_opener_policy": { "value": "same-origin" },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/detect.js", "src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
